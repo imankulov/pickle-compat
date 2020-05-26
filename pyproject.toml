@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "pickle-compat"
+version = "1.0.0"
+description = "Python 2/3 compatibility layer for Pickle"
+readme = "README.md"
+homepage = "https://github.com/Doist/pickle-compat"
+repository = "https://github.com/Doist/pickle-compat"
+authors = ["Doist Developers <dev@doist.com>"]
+license = "MIT"
+classifiers = [
+    "Intended Audience :: Developers",
+]
+include = [
+    "CHANGELOG.md"
+]
+
+[tool.poetry.dependencies]
+python = "^2.7.0 || ^3.7.0 || ^3.8.0"
+
+[tool.poetry.dev-dependencies]
+# Because of Python2.7 we can't install black, and can't use pytest 5.x
+pytest = "^4.6.0"
+flake8 = "^3.7.9"
+future = "^0.18.2"
+
+[build-system]
+requires = ["poetry>=1.0.5"]
+build-backend = "poetry.masonry.api"

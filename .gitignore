@@ -1,0 +1,6 @@
+.vscode
+.mypy_cache
+.pytest_cache
+.tox
+poetry.lock
+dist
