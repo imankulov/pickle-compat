@@ -18,6 +18,14 @@ import pickle_compat
 pickle_compat.patch()
 ```
 
+From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa. 
+
+If you want to roll back the patch, use:
+
+```
+pickle_compat.unpatch()
+```
+
 ## Problem Statement
 
 You were always aware of how pickle is unsafe, hard to debug, and how backward-incompatibility issues may bite you if you decide to update the version. You also heard that you should never use the pickle in a multi-language environment because it's Python-specific.
