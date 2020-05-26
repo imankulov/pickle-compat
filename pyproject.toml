@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pickle-compat"
-version = "1.0.1"
+version = "1.0.2"
 description = "Python 2/3 compatibility layer for Pickle"
 readme = "README.md"
 homepage = "https://github.com/Doist/pickle-compat"
