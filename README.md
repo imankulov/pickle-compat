@@ -18,7 +18,7 @@ import pickle_compat
 pickle_compat.patch()
 ```
 
-From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa. 
+From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa.
 
 If you want to roll back the patch, use:
 
@@ -32,9 +32,9 @@ You were always aware of how pickle is unsafe, hard to debug, and how backward-i
 
 You knew it all, but you considered it "good enough" for your case. You worked on a monolith application, and pickle provides a serialization mechanism that works out of the box for anything you can create from your Python code.
 
-Until came the time to migrate to Python 3. Anxious, you postponed it for your big legacy app for as long as you could, but there's no way you can delay it even further. This was when you realized that Python2 and Python3 are not two versions of the same language, but actually **two different languages** which happen to share some code constructs.
+Until came the time to migrate to Python 3. Anxious, you postponed it for your big legacy app for as long as you could, but there's no way you can delay it even further. This was when you realized that Python 2 and Python 3 are not two versions of the same language, but actually **two different languages** which happen to share some code constructs.
 
-OK, now all of a sudden, you came up with a multi-language environment, where you need to read the pickle content, serialized by Python2, from your code in Python3. If you're making gradual migration, the opposite is also true.
+OK, now all of a sudden, you came up with a multi-language environment, where you need to read the pickle content, serialized by Python 2, from your code in Python 3. If you're making gradual migration, the opposite is also true.
 
 ## First frustrations
 
@@ -45,7 +45,7 @@ $ python2 -c 'import pickle; print pickle.dumps("Hello world")' | python3 -c 'im
 'Hello world'
 ```
 
-All of a sudden, things start to get broken in the most unexpected places. For example, Python3 fails to unpickle Python2's datetime, spitting the scariest issue of any Python developer, a UnicodeDecodeError.
+All of a sudden, things start to get broken in the most unexpected places. For example, Python 3 fails to unpickle Python 2's datetime, spitting the scariest issue of any Python developer, a UnicodeDecodeError.
 
 ```bash
 $ python2 -c 'import pickle, datetime; print pickle.dumps(datetime.datetime.utcnow())' | python3 -c 'import pickle, sys; print(repr(pickle.load(sys.stdin.buffer)))'
@@ -54,7 +54,7 @@ Traceback (most recent call last):
 UnicodeDecodeError: 'ascii' codec can't decode byte 0xe4 in position 1: ordinal not in range(128)
 ```
 
-Let's follow the rabbit to learn a bit more about the pickle, just enough to make it work for Python2 and Python3. At this point, I'm not sure how to make a smooth transition from where you are to where I wanted us to be, so I start throwing random facts at you in the hope that they build a more or less consistent picture in your head.
+Let's follow the rabbit to learn a bit more about the pickle, just enough to make it work for Python 2 and Python 3. At this point, I'm not sure how to make a smooth transition from where you are to where I wanted us to be, so I start throwing random facts at you in the hope that they build a more or less consistent picture in your head.
 
 ## Protocol versions
 
@@ -69,9 +69,9 @@ Pickle has several so-called "protocols," or formats in which the file can be wr
 '\x80\x02U\x05helloq\x00.'
 ```
 
-In Python 3, Guido introduced a new version of the protocol, intentionally make it backward-incompatible with Python2.7. [See the commit](https://github.com/python/cpython/commit/f41698169198b32eecd60337a9437ea8c1714380). The comment around the `DEFAULT_PROTOCOL` constant warns, "We intentionally write a protocol that Python 2.x cannot read; there are too many issues with that."
+In Python 3, Guido introduced a new version of the protocol, intentionally make it backward-incompatible with Python 2.7. [See the commit](https://github.com/python/cpython/commit/f41698169198b32eecd60337a9437ea8c1714380). The comment around the `DEFAULT_PROTOCOL` constant warns, "We intentionally write a protocol that Python 2.x cannot read; there are too many issues with that."
 
-The main takeaway from us is that if we want to have a backward- and forward-compatible code, we can only use protocols that both Python2 and Python3 understand: from 0 to 2 inclusive.
+The main takeaway from us is that if we want to have a backward- and forward-compatible code, we can only use protocols that both Python 2 and Python 3 understand: from 0 to 2 inclusive.
 
 ## Pickle format and pickletools
 
@@ -91,7 +91,7 @@ Here the main takeaway is that data in a pickle are represented in the format of
 
 ## Strings and bytes
 
-Let's find out how text and bytes are represented in Python2 and Python3, and what are the differences between then. We'll use Pickle version 2 for comparison. There's no surprise that Python2 encodes strings and bytes as `BINSTRING` and Unicode objects as `BINUNICODE`.
+Let's find out how text and bytes are represented in Python 2 and Python 3, and what are the differences between then. We'll use Pickle version 2 for comparison. There's no surprise that Python 2 encodes strings and bytes as `BINSTRING` and Unicode objects as `BINUNICODE`.
 
 ```python
 $ python2
@@ -116,7 +116,7 @@ highest protocol among opcodes = 2
 highest protocol among opcodes = 2
 ```
 
-On the contrary, Python3 doesn't want to deal with "strings" as the name is ambiguous, and prefers to deal with `BINBYTES` and `BINUNICODE`. I will show how it's encoded in the protocol 3 that doesn't mean to be compatible with Python2.
+On the contrary, Python 3 doesn't want to deal with "strings" as the name is ambiguous, and prefers to deal with `BINBYTES` and `BINUNICODE`. I will show how it's encoded in the protocol 3 that doesn't mean to be compatible with Python 2.
 
 ```python
 $ python3
@@ -137,8 +137,8 @@ highest protocol among opcodes = 2
 
 Here come two questions:
 
-- How Python3 encode bytes in the protocol 2? Note that the second protocol knows nothing about `BINBYTES`?
-- How Python3 decodes the `BINSTRING` type, provided that it's a Python2 type, and it's ambiguous?
+- How Python 3 encode bytes in the protocol 2? Note that the second protocol knows nothing about `BINBYTES`?
+- How Python 3 decodes the `BINSTRING` type, provided that it's a Python 2 type, and it's ambiguous?
 
 Answering the first question is easy. The pickler introduces a backward-compatible hack.
 
@@ -177,9 +177,9 @@ $ python3
 True
 ```
 
-It also works for Python2, so we shouldn't care much about the backward compatibility.
+It also works for Python 2, so we shouldn't care much about the backward compatibility.
 
-Now, how Python3 decodes `BINSTRING` opcodes? From the first example, we can see that a string in Python2 is now a Unicode object in Python3. In other words, the pickler tries to convert bytes to Unicode.
+Now, how Python 3 decodes `BINSTRING` opcodes? From the first example, we can see that a string in Python 2 is now a Unicode object in Python 3. In other words, the pickler tries to convert bytes to Unicode.
 
 ```bash
 $ python2 -c 'import pickle; print pickle.dumps("Hello world")' | python3 -c 'import pickle, sys; print(repr(pickle.load(sys.stdin.buffer)))'
@@ -190,7 +190,7 @@ At this point, you probably ask yourself what encoding does it use? Fortunately,
 
 > The encoding and errors tell pickle how to decode 8-bit string instances pickled by Python 2; these default to ‘ASCII’ and ‘strict’, respectively. The encoding can be ‘bytes’ to read these 8-bit string instances as bytes objects. Using encoding='latin1' is required for unpickling NumPy arrays and instances of datetime, date and time pickled by Python 2.
 
-If you wonder what's wrong with datetime, here's how its output looks like in Python2.
+If you wonder what's wrong with datetime, here's how its output looks like in Python 2.
 
 ```python
 $ python2
@@ -225,9 +225,9 @@ python2 -c 'import pickle, datetime; print pickle.dumps(datetime.datetime.utcnow
 datetime.datetime(2020, 5, 26, 15, 19, 6, 275120)
 ```
 
-The main takeaway is that strings in Python2 are converted to Unicode objects in Python3, and you can control the encoding.
+The main takeaway is that strings in Python 2 are converted to Unicode objects in Python 3, and you can control the encoding.
 
-## Non-latin strings in Python2
+## Non-latin strings in Python 2
 
 Hopefully, at this point, you converted all your non-ASCII strings in Unicode objects, because if you haven't, you're in trouble.
 
@@ -336,7 +336,7 @@ OK, we can't use `ASCII`, `latin1`, `utf8` as an encoding, and now we learned th
 
 ## Monkeypatching the unpickler
 
-Before we go straight to this topic, there's one remark about Python3 pickle. It uses the fast version implemented in C if possible, and if it's not, it falls back to the slow pure-python implementation. [See the code](https://github.com/python/cpython/blob/5eb45d7d4e812e89d77da84cc619e9db81561a34/Lib/pickle.py#L1772-L1787).
+Before we go straight to this topic, there's one remark about Python 3 pickle. It uses the fast version implemented in C if possible, and if it's not, it falls back to the slow pure-python implementation. [See the code](https://github.com/python/cpython/blob/5eb45d7d4e812e89d77da84cc619e9db81561a34/Lib/pickle.py#L1772-L1787).
 
 We plan to subclass the standard unpickler with our version that overwrites the handler of the `BUILD` opcode. We can use this unpickler directly or monkey patch the original pickle module to call it implicitly. The code that we need to overwrite is [load_build](https://github.com/python/cpython/blob/5eb45d7d4e812e89d77da84cc619e9db81561a34/Lib/pickle.py#L1709-L1731). If you read the code, you can see that the builder tries to find out the `__setstate__` method of the object, and if nothing is found, fall back to assigning via `__dict__`.
 
@@ -354,11 +354,11 @@ It also works with non-ASCII strings and datetime objects.
 
 ## Old-style classes
 
-We are almost there, except for one thing: old-style classes. As you know, in Python3, everything subclasses objects, while in Python2, unless you explicitly inherit your class from it, the top-level class will be "type". It is considered outdated, but it's still used in different places of the standard library, waiting to ruin your life in the most unexpected moment.
+We are almost there, except for one thing: old-style classes. As you know, in Python 3, everything subclasses objects, while in Python 2, unless you explicitly inherit your class from it, the top-level class will be "type". It is considered outdated, but it's still used in different places of the standard library, waiting to ruin your life in the most unexpected moment.
 
-This time we talk about forward-compatibility and want to make sure that anything that is pickled in Python3 can be successfully unpicked in Python2.
+This time we talk about forward-compatibility and want to make sure that anything that is pickled in Python 3 can be successfully unpicked in Python 2.
 
-Let's take an object that is an old-style class in Python2.
+Let's take an object that is an old-style class in Python 2.
 
 ```bash
 python3 -c 'import pickle, smtplib, sys; sys.stdout.buffer.write(pickle.dumps(smtplib.SMTP(), protocol=2))' | python2 -c 'import pickle, sys; print pickle.load(sys.stdin)'
@@ -374,7 +374,7 @@ Traceback (most recent call last):
 AttributeError: class SMTP has no attribute '__new__'
 ```
 
-The approach is similar to the old one: find out how unpickler loads new objects and then patch it to see if the class is old. The Python2 implementation lives [here](https://github.com/python/cpython/blob/8d21aa21f2cbc6d50aab3f420bb23be1d081dac4/Lib/pickle.py#L1086-L1091).
+The approach is similar to the old one: find out how unpickler loads new objects and then patch it to see if the class is old. The Python 2 implementation lives [here](https://github.com/python/cpython/blob/8d21aa21f2cbc6d50aab3f420bb23be1d081dac4/Lib/pickle.py#L1086-L1091).
 
 Note that the protocol version 0 doesn't contain a NEWOBJ opcode and uses a set of workarounds to make it work, so this approach will only work for version 2 of the protocol.
 
