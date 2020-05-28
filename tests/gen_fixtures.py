@@ -33,13 +33,13 @@ def get_past_unicode():
 def get_old_object():
     from pickle_compat.examples import OldClass
 
-    return OldClass("foo", "bar")
+    return OldClass(u"foo", u"bar")
 
 
 def get_new_object():
     from pickle_compat.examples import NewClass
 
-    return NewClass("foo", "bar")
+    return NewClass(u"foo", u"bar")
 
 
 def get_datetime_object():
@@ -49,19 +49,19 @@ def get_datetime_object():
 
 
 def get_dict_instance():
-    return {"foo": 1}
+    return {u"foo": 1}
 
 
 def get_namedtuple():
     from pickle_compat.examples import Foo
 
-    return Foo("a", "b")
+    return Foo(u"a", u"b")
 
 
 def get_dict_subclass():
     from pickle_compat.examples import DictSubclass
 
-    return DictSubclass({b"foo": 1})
+    return DictSubclass({u"foo": 1})
 
 
 test_functions = {k[4:]: v for k, v in locals().items() if k.startswith("get_")}

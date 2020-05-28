@@ -57,11 +57,11 @@ def test_past_unicode(get_fixture):
 
 
 def test_old_object(get_fixture):
-    assert pickle.loads(get_fixture("old_object")).a == b"foo"
+    assert pickle.loads(get_fixture("old_object")).a == u"foo"
 
 
 def test_new_object(get_fixture):
-    assert pickle.loads(get_fixture("new_object")).a == b"foo"
+    assert pickle.loads(get_fixture("new_object")).a == u"foo"
 
 
 def test_datetime_object(get_fixture):
@@ -69,12 +69,12 @@ def test_datetime_object(get_fixture):
 
 
 def test_dict_instance(get_fixture):
-    assert pickle.loads(get_fixture("dict_instance")) == {b"foo": 1}
+    assert pickle.loads(get_fixture("dict_instance")) == {u"foo": 1}
 
 
 def test_namedtuple(get_fixture):
-    assert pickle.loads(get_fixture("namedtuple")).a == b"a"
+    assert pickle.loads(get_fixture("namedtuple")).a == u"a"
 
 
 def test_dict_subclass(get_fixture):
-    assert pickle.loads(get_fixture("dict_subclass")) == {"foo": 1}
+    assert pickle.loads(get_fixture("dict_subclass")) == {u"foo": 1}
