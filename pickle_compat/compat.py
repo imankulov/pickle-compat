@@ -30,8 +30,22 @@ if sys.version_info.major == 3:
     compat_loads = partial(pickle._loads, encoding="bytes")
 
     # Backward-compatible dump and dumps, that use the second version of the protocol.
-    compat_dump = partial(pickle._dump, protocol=DEFAULT_PROTOCOL)
-    compat_dumps = partial(pickle._dumps, protocol=DEFAULT_PROTOCOL)
+    def compat_dump(obj, file, protocol=None, fix_imports=True, buffer_callback=None):
+        return pickle._dump(
+            obj,
+            file,
+            protocol=DEFAULT_PROTOCOL,
+            fix_imports=fix_imports,
+            buffer_callback=buffer_callback,
+        )
+
+    def compat_dumps(obj, protocol=None, fix_imports=True, buffer_callback=None):
+        return pickle._dumps(
+            obj,
+            protocol=DEFAULT_PROTOCOL,
+            fix_imports=fix_imports,
+            buffer_callback=buffer_callback,
+        )
 
     def to_str(obj):
         """
@@ -56,10 +70,11 @@ if sys.version_info.major == 3:
 else:
     import new
     import pickle
-    from functools import partial
 
-    # Vanilla implementation of the unpickler that we'll subclass.
+    # Vanilla implementation of teh objects that we overwrite.
     VanillaUnpickler = pickle.Unpickler
+    vanilla_dump = pickle.dump
+    vanilla_dumps = pickle.dumps
 
     # Here's our unicker that knows how to process old classes.
     class CompatUnpickler(VanillaUnpickler):
@@ -82,8 +97,11 @@ else:
     compat_loads = pickle.loads
 
     # Forward-compatible dump and dumps, that use the second version of the protocol.
-    compat_dump = partial(pickle.dump, protocol=DEFAULT_PROTOCOL)
-    compat_dumps = partial(pickle.dumps, protocol=DEFAULT_PROTOCOL)
+    def compat_dump(obj, file, protocol=None):
+        return vanilla_dump(obj, file, protocol=DEFAULT_PROTOCOL)
+
+    def compat_dumps(obj, protocol=None):
+        return vanilla_dumps(obj, protocol=DEFAULT_PROTOCOL)
 
     # Backward-compatible versions of functions and classes
     compat = {

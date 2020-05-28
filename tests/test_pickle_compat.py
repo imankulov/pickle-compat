@@ -32,6 +32,10 @@ def get_fixture(request):
     return getter
 
 
+def test_dumps_with_protocol():
+    assert pickle.dumps("foo", 1)
+
+
 def test_int(get_fixture):
     assert pickle.loads(get_fixture("int")) == 1
 
