@@ -18,7 +18,7 @@ import pickle_compat
 pickle_compat.patch()
 ```
 
-From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa.
+From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa. Note however that it doesn't play well with cPickle, future.moves.pickle or six.moves.cPickle, you need to use plain "import pickle" instead.
 
 If you want to roll back the patch, use:
 
@@ -377,6 +377,26 @@ AttributeError: class SMTP has no attribute '__new__'
 The approach is similar to the old one: find out how unpickler loads new objects and then patch it to see if the class is old. The Python 2 implementation lives [here](https://github.com/python/cpython/blob/8d21aa21f2cbc6d50aab3f420bb23be1d081dac4/Lib/pickle.py#L1086-L1091).
 
 Note that the protocol version 0 doesn't contain a NEWOBJ opcode and uses a set of workarounds to make it work, so this approach will only work for version 2 of the protocol.
+
+## cPickle, future and six moves
+
+Here is a word of warning. The patcher doesn't fix cPickle of Python 2 and \_pickle of Python 3. The latter is an undocumented module imported by Python 3's pickle, if possible.
+
+The way we solved the problem for ourselves at Doist is by importing "pickle" everywhere. It works slower on Python 2, but that only serves as an extra incentive to finish the migration faster. You can use [futurize](https://python-future.org/futurize.html) from the "future" package to make it automatically, and it will convert all occurrences of `import cPickle` to `import pickle.`
+
+If you chose a different strategy of migration, with "moves," this can become cumbersome because you can import cPickle unknowingly. More specifically, this will import cPickle implementation under the hood:
+
+```
+from future.moves import pickle
+```
+
+The same goes for this:
+
+```
+from six.moves import cPickle
+```
+
+The main takeaway is that this patcher will not as expected if you use cPickle, future.moves.pickle or six.moves.cPickle.
 
 ## Putting it all together
 
