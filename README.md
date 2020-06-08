@@ -398,6 +398,34 @@ from six.moves import cPickle
 
 The main takeaway is that this patcher will not as expected if you use cPickle, future.moves.pickle or six.moves.cPickle.
 
+## Remember about the string constants
+
+I never bothered annotating my string constants that play the role of the "string constants" with a `u""` prefix. It's ugly and redundant, and in most of the cases, when my strings don't contain any non-ASCII symbols, the migration works just fine.
+
+It's not the case, though, when pickle comes into play. For example, consider this case:
+
+```python
+def apply_operation(a, b, op):
+    if op == "ADD":
+        return a + b
+    elif op == "SUB":
+        return a - b
+    else:
+        raise ValueError("Unknown operation")
+```
+
+Somewhere else, I let the `op` pass through the pickle-unpickle pipeline so that Python 2 would convert it to a binary string, and Python 3 would unpickle it exactly as is. In my case, this could be a caching library or a queue processor. Now, I pass my `op` as a binary object to the function, and because `"ADD" != b"ADD"`, it will always fail with an "Unknown operation" exception.
+
+Maybe disallowing automatic conversion from bytes to Unicode was not such a good idea in the first place? It's hard to say with just this example in mind, but using "latin1" or "utf8" doesn't look good either. Remember the "Non-Latin strings in Python 2" case?
+
+My solution is to make all string constants behave like Unicode objects. You can annotate them explicitly or add `from __future__ import unicode_literals`. Both solutions don't look quite elegant. Fortunately, when you finally migrate to Python 3, you can delete both of them, and you can do this automatically. I prefer the "future" solution because it generates a smaller diff.
+
+```bash
+futurize --stage1 --unicode-literals --write --nobackups path/to/code
+```
+
+The main takeaway is be consistent and explicit about your string literals.
+
 ## Putting it all together
 
 What we learned
