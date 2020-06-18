@@ -229,7 +229,9 @@ The main takeaway is that strings in Python 2 are converted to Unicode objects i
 
 ## Non-latin strings in Python 2
 
-Hopefully, at this point, you converted all your non-ASCII strings in Unicode objects, because if you haven't, you're in trouble.
+What if you have a non-ASCII content, represented as an old string and not a Unicode object? If you pickle it in Python 2 and unpickle it back in Python 3, you are in trouble.
+
+The byte string doesn't have any information about the encoding. In Python 2, you probably implicitly supposed that it's a UTF-8, but when you convert it back to Python 3 with Unpickle, it appears as encoded with latin1.
 
 ```bash
 python2 -c 'import pickle; print pickle.dumps("©")' | python3 -c 'import pickle, sys; print(repr(pickle.load(sys.stdin.buffer, encoding="latin1")))'
@@ -245,6 +247,8 @@ python2 -c 'import pickle; print pickle.dumps("©")' | python3 -c 'import pickle
 
 Unfortunately, it will not work for datetimes and other binary strings that don't represent a valid UTF-8 sequence.
 
+## Unpickling with "bytes" encoding
+
 Well, we were so close to the victory, and we're back to square one. What we're going to do? Fortunately, there's a documented escape hatch, the "bytes" encoding. This encoding looks precisely the way we need it. It doesn't try to outsmart you and convert bytes to something that looks like a string. Instead, it returns bytes as bytes objects. Even better than "latin1"!
 
 ```bash
@@ -254,11 +258,53 @@ b'\xc2\xa9'
 
 Datetime objects also work. Is this a victory? Not so fast.
 
-## Objects with attributes
+## Unpickling with "bytes" encoding. The string constants
 
-Consider the file `foo.py`, and let's try to serialize `foo.foo`.
+I never bothered annotating my string constants that play the role of the "string constants" with a `u""` prefix. It's ugly and redundant, and in most cases, when my strings don't contain any non-ASCII symbols, the migration works just fine.
+
+It's not the case, though, when pickle comes into play. For example, consider the function which takes two arguments and an operation name as a string:
 
 ```python
+def apply_operation(a, b, op):
+    if op == "ADD":
+        return a + b
+    elif op == "SUB":
+        return a - b
+    else:
+        raise ValueError("Unknown operation")
+```
+
+Somewhere else, I let the `op` pass through the pickle-unpickle pipeline so that Python 2 would convert it to a binary string, and Python 3 would unpickle it exactly as is. In my case, this could be a caching library or a queue processor. Now, I pass my `op` as a binary object to the function, and because `"ADD" != b"ADD"`, it will always fail with an "Unknown operation" exception.
+
+The most common bytes vs. Unicode problems look like these. Case one:
+
+```python
+>>> "foo" == b"foo"
+False
+```
+
+Case two:
+
+```python
+>>> {"key": "value"}[b"key"]
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+KeyError: b'key'
+```
+
+One solution is to make all string constants behave like Unicode objects. You can convert them explicitly from `""` to `u""` or add `from __future__ import unicode_literals`. Both solutions don't look quite elegant. Fortunately, when you finally migrate to Python 3, you can delete both of them, and you can do this automatically. I prefer the "future" solution because it generates a smaller diff.
+
+```bash
+futurize --stage1 --unicode-literals --write --nobackups path/to/code
+```
+
+## Unpickling with "bytes" encoding. Objects with attributes
+
+It is, by far, not the worst case. To make things even more complicated let's try to serialize `foo.foo`.
+
+```python
+# file: foo.py
+
 class Foo(object):
     a = 'UNSET'
     b = 'UNSET'
@@ -332,25 +378,92 @@ python2 -c 'import pickle, foo; print pickle.dumps(foo.foo)' | python3 -c 'impor
 {b'a': 1, b'b': 2}
 ```
 
-OK, we can't use `ASCII`, `latin1`, `utf8` as an encoding, and now we learned that we couldn't use `bytes`? It looks like a dead-end. Or you can get to your last resort, dirty and evil, monkey-patching.
+OK, we can't use `ASCII`, `latin1`, `utf8` as an encoding, and now we learned that we couldn't use `bytes`? It looks like a dead-end. Or you can get to your last resort, dirty and evil, monkey-patching. The previous version of the pickle-compat used this approach, but we eventually decided to get away without it in favor of "latin1", due to way too many corner cases.
 
-## Monkeypatching the unpickler
+## Get back to unpickling with "latin1" encoding. Be careful with non-ASCII strings
 
-Before we go straight to this topic, there's one remark about Python 3 pickle. It uses the fast version implemented in C if possible, and if it's not, it falls back to the slow pure-python implementation. [See the code](https://github.com/python/cpython/blob/5eb45d7d4e812e89d77da84cc619e9db81561a34/Lib/pickle.py#L1772-L1787).
+So, as we learned, the only practical unpickling option is to automatically decode Python 2 str to Python 3 str using "latin1" as an encoding. As we discussed earlier, though, we need to be very careful with byte strings implicitly encoded with UTF-8. I will only provide some examples where you can accidentally come across them. This way or another, you need to fix everything outlined below, regardless of whether you plan to deal with Pickle cases, or not.
 
-We plan to subclass the standard unpickler with our version that overwrites the handler of the `BUILD` opcode. We can use this unpickler directly or monkey patch the original pickle module to call it implicitly. The code that we need to overwrite is [load_build](https://github.com/python/cpython/blob/5eb45d7d4e812e89d77da84cc619e9db81561a34/Lib/pickle.py#L1709-L1731). If you read the code, you can see that the builder tries to find out the `__setstate__` method of the object, and if nothing is found, fall back to assigning via `__dict__`.
+### Code
 
-Let's follow the path of modifying `__dict__` before assignment because it looks less invasive than messing with `__setstate__`.
+This returns an str:
 
-I ended up with the code that you can find in `pickle_compat.compat` and load with `pickle_compat.patch()`. It works!
+```python
+# coding: utf-8
 
-```
-python2 -c 'import pickle, foo; print pickle.dumps(foo.foo)' | python3 -c 'import pickle, sys, pickle_compat; pickle_compat.patch(); print(pickle.load(sys.stdin.buffer))'
-
-Foo(1, 2)
+copy = "©"
 ```
 
-It also works with non-ASCII strings and datetime objects.
+Use this instead:
+
+```python
+# coding: utf-8
+from __future__ import unicode_literals
+
+copy = "©"
+```
+
+### Files
+
+This returns an str:
+
+```python
+open('test.txt').read()
+```
+
+Use the variant that returns unicode and works correctly in Python 2 and Python 3:
+
+```python
+import io
+io.open('test.txt', 'rt', encoding='utf8').read()
+```
+
+### Redis
+
+This returns an str:
+
+```python
+redis.Redis().get("foo")
+```
+
+Use `decode_responses` instead:
+
+```python
+redis.Redis(decode_responses=True).get("foo")
+```
+
+### CSV reader
+
+This returns str objects:
+
+```python
+>>> import csv
+>>> list(csv.reader(open("foo.csv")))
+[['a', 'b'], ['c', 'd']]
+```
+
+Install [backports.csv](https://pypi.org/project/backports.csv/) and open files in text modes instead:
+
+```python
+>>> from backports import csv
+>>> import io
+>>> list(csv.reader(io.open("foo.csv", "rt", encoding="utf8")))
+[[u'a', u'b'], [u'c', u'd']]
+```
+
+### Requests
+
+This returns an str:
+
+```python
+requests.get("https://example.com").content
+```
+
+Use the variant that returns unicode:
+
+```python
+requests.get("https://example.com").text
+```
 
 ## Old-style classes
 
@@ -398,41 +511,13 @@ from six.moves import cPickle
 
 The main takeaway is that this patcher will not as expected if you use cPickle, future.moves.pickle or six.moves.cPickle.
 
-## Remember about the string constants
-
-I never bothered annotating my string constants that play the role of the "string constants" with a `u""` prefix. It's ugly and redundant, and in most of the cases, when my strings don't contain any non-ASCII symbols, the migration works just fine.
-
-It's not the case, though, when pickle comes into play. For example, consider this case:
-
-```python
-def apply_operation(a, b, op):
-    if op == "ADD":
-        return a + b
-    elif op == "SUB":
-        return a - b
-    else:
-        raise ValueError("Unknown operation")
-```
-
-Somewhere else, I let the `op` pass through the pickle-unpickle pipeline so that Python 2 would convert it to a binary string, and Python 3 would unpickle it exactly as is. In my case, this could be a caching library or a queue processor. Now, I pass my `op` as a binary object to the function, and because `"ADD" != b"ADD"`, it will always fail with an "Unknown operation" exception.
-
-Maybe disallowing automatic conversion from bytes to Unicode was not such a good idea in the first place? It's hard to say with just this example in mind, but using "latin1" or "utf8" doesn't look good either. Remember the "Non-Latin strings in Python 2" case?
-
-My solution is to make all string constants behave like Unicode objects. You can annotate them explicitly or add `from __future__ import unicode_literals`. Both solutions don't look quite elegant. Fortunately, when you finally migrate to Python 3, you can delete both of them, and you can do this automatically. I prefer the "future" solution because it generates a smaller diff.
-
-```bash
-futurize --stage1 --unicode-literals --write --nobackups path/to/code
-```
-
-The main takeaway is be consistent and explicit about your string literals.
-
 ## Putting it all together
 
 What we learned
 
-- The default version of the protocol has to be 2, both for Python 2 and Python 3
-- We must prevent automatic conversion from bytes to strings by passing "bytes" as encoding in the pickle for Python 3
-- We must patch Unpickler in Python 3 to set object attributes properly.
+- The default version of the protocol has to be 2, both for Python 2 and Python 3.
+- We must use the "latin1" encoding in the pickle for Python 3.
+- We must be careful with plain strings, represented non-ASCII objects.
 - We must patch Unpickler in Python 2 to correctly unpickle instances of old-style classes.
 
 Also, we learned some of the internals of pickle and learned how to use pickletools. Finally, we wrapped everything with a `pickle_compat` library that monkey-patches the standard pickle module.
