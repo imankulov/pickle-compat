@@ -382,7 +382,7 @@ OK, we can't use `ASCII`, `latin1`, `utf8` as an encoding, and now we learned th
 
 ## Get back to unpickling with "latin1" encoding. Be careful with non-ASCII strings
 
-So, as we learned, the only practical unpickling option is to automatically decode Python 2 str to Python 3 str using "latin1" as an encoding. As we discussed earlier, though, we need to be very careful with byte strings implicitly encoded with UTF-8. I will only provide some examples where you can accidentally come across them. This way or another, you need to fix everything outlined below, regardless of whether you plan to deal with Pickle cases, or not.
+So, as we learned, the only practical unpickling option is to automatically decode Python 2 str to Python 3 str using "latin1" as an encoding. As we discussed earlier, though, we need to be very careful with byte strings implicitly encoded with UTF-8. I will only provide some examples where you can accidentally come across them. This way or another, you need to fix everything outlined below, regardless of whether you plan to deal with Pickle cases.
 
 ### Code
 
