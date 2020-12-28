@@ -49,7 +49,11 @@ def test_unicode(get_fixture):
 
 
 def test_bytes(get_fixture):
-    assert pickle.loads(get_fixture("bytes")) == b"foo"
+    # There's an inconsistency: The unpicker
+    # returns bytes for a pickled with python3 object
+    # and a string for a pickled with python2 object.
+    loaded_object = pickle.loads(get_fixture("bytes"))
+    assert loaded_object == "foo" or loaded_object == b"foo"
 
 
 def test_past_unicode(get_fixture):
