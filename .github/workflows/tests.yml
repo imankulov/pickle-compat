@@ -22,4 +22,5 @@ jobs:
           pip install tox
       - name: Test with pytest
         run: |
-          tox -e py${{ matrix.python-version }}
+          tox_python_version=$(echo "${{ matrix.python-version }}" | tr -d .)
+          tox -e py$tox_python_version
