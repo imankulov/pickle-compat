@@ -20,7 +20,7 @@ import pickle_compat
 pickle_compat.patch()
 ```
 
-From this point you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa. Note however that it doesn't play well with cPickle, future.moves.pickle or six.moves.cPickle, you need to use plain "import pickle" instead.
+From this point, you can safely assume that what's pickled with `pickle.dumps()` in Python 2 can be converted back to the real object in Python 3 with `pickle.loads()`, and vise versa. However, note that it doesn't play well with cPickle, future.moves.pickle, or six.moves.cPickle, you need to use plain "import pickle" instead.
 
 If you want to roll back the patch, use:
 
@@ -34,13 +34,13 @@ You were always aware of how pickle is unsafe, hard to debug, and how backward-i
 
 You knew it all, but you considered it "good enough" for your case. You worked on a monolith application, and pickle provides a serialization mechanism that works out of the box for anything you can create from your Python code.
 
-Until came the time to migrate to Python 3. Anxious, you postponed it for your big legacy app for as long as you could, but there's no way you can delay it even further. This was when you realized that Python 2 and Python 3 are not two versions of the same language, but actually **two different languages** which happen to share some code constructs.
+Until came the time to migrate to Python 3. Anxious, you postponed it for your big legacy app for as long as you could, but there's no way you can delay it even further. This was when you realized that Python 2 and Python 3 are not two versions of the same language, but actually **two different languages** that happen to share some code constructs.
 
 OK, now all of a sudden, you came up with a multi-language environment, where you need to read the pickle content, serialized by Python 2, from your code in Python 3. If you're making gradual migration, the opposite is also true.
 
 ## First frustrations
 
-Things work out of the box only for simplest cases.
+Things work out of the box only for the most straightforward cases.
 
 ```bash
 $ python2 -c 'import pickle; print pickle.dumps("Hello world")' | python3 -c 'import pickle, sys; print(repr(pickle.load(sys.stdin.buffer)))'
@@ -60,7 +60,7 @@ Let's follow the rabbit to learn a bit more about the pickle, just enough to mak
 
 ## Protocol versions
 
-Pickle has several so-called "protocols," or formats in which the file can be written. You can optionally define the protocol version in the `pickle.dumps()`. The default format in Python 2.7 is 0 (also known as ASCII format), but it can read and write in the formats 1 and 2 as well. Formats 1 and 2 are not ASCII-safe, but they are more compact and faster.
+Pickle has several so-called "protocols," or formats in which the file can be written. You can optionally define the protocol version in the `pickle.dumps()`. The default format in Python 2.7 is 0 (also known as ASCII format), but it can read and write in formats 1 and 2 as well. Formats 1 and 2 are not ASCII-safe, but they are more compact and faster.
 
 ```python
 >>> pickle.dumps("hello")
@@ -93,7 +93,7 @@ Here the main takeaway is that data in a pickle are represented in the format of
 
 ## Strings and bytes
 
-Let's find out how text and bytes are represented in Python 2 and Python 3, and what are the differences between then. We'll use Pickle version 2 for comparison. There's no surprise that Python 2 encodes strings and bytes as `BINSTRING` and Unicode objects as `BINUNICODE`.
+Let's find out how text and bytes are represented in Python 2 and Python 3 and what the differences are between them. We'll use Pickle version 2 for comparison. There's no surprise that Python 2 encodes strings and bytes as `BINSTRING` and Unicode objects as `BINUNICODE`.
 
 ```python
 $ python2
@@ -118,7 +118,7 @@ highest protocol among opcodes = 2
 highest protocol among opcodes = 2
 ```
 
-On the contrary, Python 3 doesn't want to deal with "strings" as the name is ambiguous, and prefers to deal with `BINBYTES` and `BINUNICODE`. I will show how it's encoded in the protocol 3 that doesn't mean to be compatible with Python 2.
+On the contrary, Python 3 doesn't want to deal with "strings" as the name is ambiguous and prefers to deal with `BINBYTES` and `BINUNICODE`. I will show how it's encoded in protocol 3 that doesn't mean to be compatible with Python 2.
 
 ```python
 $ python3
@@ -139,8 +139,8 @@ highest protocol among opcodes = 2
 
 Here come two questions:
 
-- How Python 3 encode bytes in the protocol 2? Note that the second protocol knows nothing about `BINBYTES`?
-- How Python 3 decodes the `BINSTRING` type, provided that it's a Python 2 type, and it's ambiguous?
+- How Python 3 encode bytes in protocol 2? Note that the second protocol knows nothing about `BINBYTES`?
+- How Python 3 decodes the `BINSTRING` type, provided that it's a Python 2 type and it's ambiguous?
 
 Answering the first question is easy. The pickler introduces a backward-compatible hack.
 
@@ -231,7 +231,7 @@ The main takeaway is that strings in Python 2 are converted to Unicode objects i
 
 ## Non-latin strings in Python 2
 
-What if you have a non-ASCII content, represented as an old string and not a Unicode object? If you pickle it in Python 2 and unpickle it back in Python 3, you are in trouble.
+What if you have non-ASCII content, represented as an old string and not a Unicode object? If you pickle it in Python 2 and unpickle it back in Python 3, you are in trouble.
 
 The byte string doesn't have any information about the encoding. In Python 2, you probably implicitly supposed that it's a UTF-8, but when you convert it back to Python 3 with Unpickle, it appears as encoded with latin1.
 
@@ -302,7 +302,7 @@ futurize --stage1 --unicode-literals --write --nobackups path/to/code
 
 ## Unpickling with "bytes" encoding. Objects with attributes
 
-It is, by far, not the worst case. To make things even more complicated let's try to serialize `foo.foo`.
+It is, by far, not the worst case. To make things even more complicated, let's try to serialize `foo.foo`.
 
 ```python
 # file: foo.py
@@ -327,7 +327,7 @@ $ python2 -c 'import pickle, foo; print pickle.dumps(foo.foo)' | python3 -c 'imp
 Foo(1, 2)
 ```
 
-But if we pass "bytes" as an argument, all of a sudden something goes wrong.
+But if we pass "bytes" as an argument, all of a sudden, something goes wrong.
 
 ```bash
 python2 -c 'import pickle, foo; print pickle.dumps(foo.foo)' | python3 -c 'import pickle, sys; print(repr(pickle.load(sys.stdin.buffer, encoding="bytes")))'
@@ -370,7 +370,7 @@ obj = object.__new__(foo.Foo)
 obj.__dict__ = {"a": 1, "b": 2}
 ```
 
-I think now you understand what went wrong. Because of the `bytes` encoding, we did not convert b"a" and b"b" to their "python3-string" representations. You can put anything to object's dict, but only the keys that are strings are represented as "proper object attributes."
+I think now you understand what went wrong. Because of the `bytes` encoding, we did not convert b"a" and b"b" to their "python3-string" representations. You can put anything to an object's dict, but only the keys that are strings are represented as "proper object attributes."
 
 The next command shows the contents of the `__dict__` of an object and proves that we were right?
 
@@ -388,7 +388,7 @@ So, as we learned, the only practical unpickling option is to automatically deco
 
 ### Code
 
-This returns an str:
+This returns str:
 
 ```python
 # coding: utf-8
@@ -493,13 +493,13 @@ The approach is similar to the old one: find out how unpickler loads new objects
 
 Note that the protocol version 0 doesn't contain a NEWOBJ opcode and uses a set of workarounds to make it work, so this approach will only work for version 2 of the protocol.
 
-## cPickle, future and six moves
+## cPickle, future, and six moves
 
 Here is a word of warning. The patcher doesn't fix cPickle of Python 2 and \_pickle of Python 3. The latter is an undocumented module imported by Python 3's pickle, if possible.
 
 The way we solved the problem for ourselves at Doist is by importing "pickle" everywhere. It works slower on Python 2, but that only serves as an extra incentive to finish the migration faster. You can use [futurize](https://python-future.org/futurize.html) from the "future" package to make it automatically, and it will convert all occurrences of `import cPickle` to `import pickle.`
 
-If you chose a different strategy of migration, with "moves," this can become cumbersome because you can import cPickle unknowingly. More specifically, this will import cPickle implementation under the hood:
+If you chose a different migration strategy, with "moves," this can become cumbersome because you can import cPickle unknowingly. More specifically, this will import cPickle implementation under the hood:
 
 ```
 from future.moves import pickle
