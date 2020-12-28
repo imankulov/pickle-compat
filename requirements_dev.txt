@@ -62,7 +62,7 @@ pyparsing==2.4.7 \
 pytest==4.6.10 \
     --hash=sha256:a24f6d11abff602da7b8aa33520734d604d25c4f070222e23667bb9782ba763e \
     --hash=sha256:0031b5021e1204f12e5a044500fbf31e3f64c6f2d69ded910af003abd0d91ae4
-scandir==1.10.0; python_version < "3.5" \
+scandir==1.10.0; python_version < "3.5" or python_version < "3" and sys_platform != "win32" or python_version < "3.4" and sys_platform != "win32" \
     --hash=sha256:92c85ac42f41ffdc35b6da57ed991575bdbe69db895507af88b9f499b701c188 \
     --hash=sha256:cb925555f43060a1745d0a321cca94bcea927c50114b623d73179189a4e100ac \
     --hash=sha256:2c712840c2e2ee8dfaf36034080108d30060d759c7b73a01a52251cc8989f11f \
