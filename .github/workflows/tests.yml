@@ -20,7 +20,8 @@ jobs:
         run: |
           pip install -r requirements_dev.txt
           pip install tox
-      - name: Test with pytest
+      - name: Test with tox
         run: |
+          set -eux
           tox_python_version=$(echo "${{ matrix.python-version }}" | tr -d .)
           tox -e py$tox_python_version
