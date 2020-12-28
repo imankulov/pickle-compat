@@ -16,7 +16,7 @@ def _patch():
 
 
 @pytest.fixture(params=["py2", "py3"])
-@pytest.mark.parametrize("python_version",)
+@pytest.mark.parametrize("python_version")
 def get_fixture(request):
     python_version = request.param
 

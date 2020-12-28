@@ -10,8 +10,8 @@ if sys.version_info.major == 3:
     from functools import partial
 
     # Backward-compatible load and loads, that use "latin1" as a default encoding.
-    compat_load = partial(pickle._load, encoding=DEFAULT_ENCODING)
-    compat_loads = partial(pickle._loads, encoding=DEFAULT_ENCODING)
+    compat_load = partial(pickle._load, encoding=DEFAULT_ENCODING)  # type: ignore
+    compat_loads = partial(pickle._loads, encoding=DEFAULT_ENCODING)  # type: ignore
 
     # Backward-compatible dump and dumps, that use the second version of the protocol.
     def compat_dump(obj, file, protocol=None, fix_imports=True, buffer_callback=None):
@@ -41,8 +41,9 @@ if sys.version_info.major == 3:
     }
 
 else:
-    import new
     import pickle
+
+    import new
 
     # Vanilla implementation of the objects that we overwrite.
     VanillaUnpickler = pickle.Unpickler
@@ -63,17 +64,19 @@ else:
 
     # We also need to explicitly register our own handler in the dispatcher, because
     # otherwise a method of the superclass will be called
-    CompatUnpickler.dispatch[pickle.NEWOBJ] = CompatUnpickler.load_newobj
+    CompatUnpickler.dispatch[  # type: ignore
+        pickle.NEWOBJ
+    ] = CompatUnpickler.load_newobj
 
     # Forward-compatible load and loads, nothing is needed to be patched
-    compat_load = pickle.load
-    compat_loads = pickle.loads
+    compat_load = pickle.load  # type: ignore
+    compat_loads = pickle.loads  # type: ignore
 
     # Forward-compatible dump and dumps, that use the second version of the protocol.
-    def compat_dump(obj, file, protocol=None):
+    def compat_dump(obj, file, protocol=None):  # type: ignore
         return vanilla_dump(obj, file, protocol=DEFAULT_PROTOCOL)
 
-    def compat_dumps(obj, protocol=None):
+    def compat_dumps(obj, protocol=None):  # type: ignore
         return vanilla_dumps(obj, protocol=DEFAULT_PROTOCOL)
 
     # Backward-compatible versions of functions and classes

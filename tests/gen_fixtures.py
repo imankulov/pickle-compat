@@ -72,8 +72,8 @@ PICKLE_PY2_COMPAT_PROTO = 2
 
 def run():
     import os
-    import sys
     import pickle
+    import sys
 
     root = os.path.dirname(__file__)
     directory = os.path.join(root, "fixtures", "py{}".format(sys.version_info.major))
