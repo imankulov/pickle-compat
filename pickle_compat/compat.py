@@ -16,19 +16,12 @@ if sys.version_info.major == 3:
     # Backward-compatible dump and dumps, that use the second version of the protocol.
     def compat_dump(obj, file, protocol=None, fix_imports=True, **kwargs):
         return pickle._dump(
-            obj,
-            file,
-            protocol=DEFAULT_PROTOCOL,
-            fix_imports=fix_imports,
-            **kwargs
+            obj, file, protocol=DEFAULT_PROTOCOL, fix_imports=fix_imports, **kwargs
         )
 
     def compat_dumps(obj, protocol=None, fix_imports=True, **kwargs):
         return pickle._dumps(
-            obj,
-            protocol=DEFAULT_PROTOCOL,
-            fix_imports=fix_imports,
-            **kwargs
+            obj, protocol=DEFAULT_PROTOCOL, fix_imports=fix_imports, **kwargs
         )
 
     # Backward-compatible versions of functions and classes
