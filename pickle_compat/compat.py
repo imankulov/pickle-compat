@@ -57,9 +57,10 @@ else:
 
     # We also need to explicitly register our own handler in the dispatcher, because
     # otherwise a method of the superclass will be called
-    CompatUnpickler.dispatch[  # type: ignore
-        pickle.NEWOBJ
-    ] = CompatUnpickler.load_newobj
+    CompatUnpickler.dispatch = VanillaUnpickler.dispatch.copy()  # type: ignore
+    CompatUnpickler.dispatch[
+        pickle.NEWOBJ  # type: ignore
+    ] = CompatUnpickler.load_newobj  # type: ignore
 
     # Forward-compatible load and loads, nothing is needed to be patched
     compat_load = pickle.load  # type: ignore
