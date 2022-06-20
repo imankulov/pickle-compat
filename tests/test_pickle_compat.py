@@ -82,3 +82,14 @@ def test_namedtuple(get_fixture):
 
 def test_dict_subclass(get_fixture):
     assert pickle.loads(get_fixture("dict_subclass")) == {u"foo": 1}
+
+
+class Foo(object):
+    pass
+
+
+def test_loads_after_unpatch():
+    serialized = pickle.dumps(Foo())
+    unpatch()
+    foo = pickle.loads(serialized)
+    assert isinstance(foo, Foo)
