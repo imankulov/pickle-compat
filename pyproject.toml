@@ -23,6 +23,9 @@ pytest = "^4.6.0"
 flake8 = "^3.7.9"
 future = "^0.18.2"
 
+[tool.black]
+skip-string-normalization = true
+
 [build-system]
 requires = ["poetry>=1.0.5"]
 build-backend = "poetry.masonry.api"
