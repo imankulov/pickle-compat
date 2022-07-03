@@ -1,6 +1,6 @@
 # pickle-compat
 
-![tests](https://github.com/Doist/pickle-compat/workflows/tests/badge.svg)
+![tests](https://github.com/imankulov/pickle-compat/workflows/tests/badge.svg)
 
 Python 2/3 compatibility layer for Pickle
 

@@ -3,9 +3,9 @@ name = "pickle-compat"
 version = "2.1.0"
 description = "Python 2/3 compatibility layer for Pickle"
 readme = "README.md"
-homepage = "https://github.com/Doist/pickle-compat"
-repository = "https://github.com/Doist/pickle-compat"
-authors = ["Doist Developers <dev@doist.com>"]
+homepage = "https://github.com/imankulov/pickle-compat"
+repository = "https://github.com/imankulov/pickle-compat"
+authors = ["Doist Developers <dev@doist.com>", "Roman Imankulov <roman.imankulov@gmail.com>"]
 license = "MIT"
 classifiers = [
     "Intended Audience :: Developers",
