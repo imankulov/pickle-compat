@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## 2.1.1 - 2022-07-03
 
 - Fix TypeError() on loading objects after `pickle_compat.unpatch()`
 
